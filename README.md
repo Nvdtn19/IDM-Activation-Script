@@ -4,7 +4,7 @@ A fork of [WindowsAddict's IDM Activation Script (archived)](https://github.com/
 ## Features
 
 -   IDM freeze trial and activation with registry key lock method
--   Block IDM nags after freezing the trial period (Currently only works with the English version of IDM)
+-   Block any IDM nags after freezing the trial period (Currently only works with the English version of IDM)
 -   Activation and trial persist even after installing IDM updates
 -   IDM trial reset
 -   Fully open source
