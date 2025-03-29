@@ -17,7 +17,7 @@ HideIDMPopups() {
         winText := WinGetText(idmWindow)
         if winText && (InStr(winText, "Your browser may not open IDM website because an important system file is damaged on your computer") 
                     || InStr(winText, "Do you want to register your copy of IDM now?")
-                    || InStr(winText, "IDM is not registered in 30 days")) {
+                    || InStr(winText, "IDM has not been registered for 30 days. Trial period is over")) {
             WinHide(idmWindow)
         }
     }
