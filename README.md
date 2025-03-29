@@ -1,11 +1,3 @@
-# Notice:
-
-## This project has been archived and is no longer being maintained.
-
-I've switched to FDM, don't want to keep up with IDM new nags anymore.
-
-------------------------------------------------------------------------
-
 ## IDM Activation Script
 
 An open-source tool to activate and reset the trial of [Internet Download Manager](https://www.internetdownloadmanager.com/)
