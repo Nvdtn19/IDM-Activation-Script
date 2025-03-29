@@ -1,10 +1,10 @@
 ## IDM Activation Script
-
-An open-source tool to activate and reset the trial of [Internet Download Manager](https://www.internetdownloadmanager.com/)
+A fork of [WindowsAddict's IDM Activation Script (archived)](https://github.com/WindowsAddict/IDM-Activation-Script), which is an open source tool to activate and reset trial of [Internet Download Manager](https://www.internetdownloadmanager.com).
 
 ## Features
 
 -   IDM freeze trial and activation with registry key lock method
+-   Block IDM nags after freezing the trial period (Currently only works with the English version of IDM)
 -   Activation and trial persist even after installing IDM updates
 -   IDM trial reset
 -   Fully open source
@@ -12,8 +12,7 @@ An open-source tool to activate and reset the trial of [Internet Download Manage
 
 ## IAS Latest Release
 
-Last Release - v1.2 (12-Feb-2024)\
-[GitHub](https://github.com/WindowsAddict/IDM-Activation-Script) - [BitBucket](https://bitbucket.org/WindowsAddict/idm-activation-script/)
+Last Release - v1.3 (29-Mar-2025)\
 
 ## Download / How to use it?
 
@@ -36,7 +35,7 @@ Last Release - v1.2 (12-Feb-2024)\
 
 ### Method 2 - Traditional
 
--   Download the file from [GitHub](https://github.com/WindowsAddict/IDM-Activation-Script/archive/refs/heads/main.zip) or [Bitbucket](https://bitbucket.org/WindowsAddict/idm-activation-script/get/main.zip)
+-   Download the file from [GitHub](https://github.com/Nvdtn19/IDM-Activation-Script/archive/refs/heads/main.zip) 
 -   Right-click on the downloaded zip file and extract
 -   In the extracted folder, run the file named `IAS.cmd`
 -   You will see the activation options, and follow onscreen instructions.
@@ -85,6 +84,12 @@ Last Release - v1.2 (12-Feb-2024)\
 -   Raise the issue on [Github](https://github.com/WindowsAddict/IDM-Activation-Script) with screenshots.
 
 ## Changelog
+
+#### v1.3
+-   New features: [Block IDM Nags](https://www.reddit.com/r/Piracy/comments/1c65bb5/any_idea_how_to_prevent_this_popup_from_appearing/) after freezing the trial period. How this methods works:
+  - Block the ```secure.internetdownloadmanager.com``` domain in the hosts file to prevent license check. The nags window is actually come from that domain. There should be no issues that affect IDM if that domain is blocked.
+  - When the trial period is expired, IDM will try to load the nags from that domain and shows to the user. But since that domain is now blocked, IDM will failed to load it and instead, shows another nags popup, "Your browser may not open IDM website because an important system file is damaged on your computer. Repair this file?" everytime it tries to show the original nags.
+  - So we used an [AutoHotKey script](https://github.com/Nvdtn19/IDM-Activation-Script/blob/main/block_idm_popup.ahk) script that also auto hide this kind of nags! The script is always run in the background, so it can spy and block any kinds of nags.
 
 #### v1.2
 
