@@ -12,7 +12,13 @@ A fork of [WindowsAddict's IDM Activation Script (archived)](https://github.com/
 
 ## IAS Latest Release
 
-Last Release - v1.3 (29-Mar-2025)\
+Last Release - v1.3 (29-Mar-2025)
+
+#### OS requirement
+
+-   The project is untested on Windows 7/8/8.1. Use it at your own risk. Only Windows 10 and 11 is tested.
+-   The PowerShell method to run IAS is supported on Windows 8 and higher.
+
 
 ## Download / How to use it?
 
@@ -58,11 +64,6 @@ Not available yet
 
 -   Internet download manager provides a 30-day trial period, you can use this script to reset this Activation / Trial period whenever you want.
 -   This option also can be used to restore status if in case IDM reports a fake serial key and other similar errors.
-
-#### OS requirement
-
--   The project is supported for Windows 7/8/8.1/10/11 and their Server equivalent.
--   The PowerShell method to run IAS is supported on Windows 8 and higher.
 
 #### Advanced Info
 
