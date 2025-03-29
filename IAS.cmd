@@ -606,6 +606,10 @@ call :_color %Green% "The IDM Activation process has been completed."
 echo:
 call :_color %Gray% "If the fake serial screen appears, use the Freeze Trial option instead."
 ) else (
+:: Run the required actions before showing the final message
+call :modifying_hosts_file
+call :download_ahk
+call :popupblocker
 call :_color %Green% "The IDM 30 days trial period is successfully freezed for Lifetime."
 echo:
 call :_color %Gray% "If IDM is showing a popup to register, reinstall IDM."
@@ -733,6 +737,105 @@ set "reg=%reg:"=%"
 call :_color2 %Red% "Failed - !reg!"
 )
 exit /b
+
+:modifying_hosts_file:
+
+echo.
+echo Modifying hosts file to block secure.internetdownloadmanager.com...
+set "HOSTS_FILE=C:\Windows\System32\drivers\etc\hosts"
+set "ENTRY=127.0.0.1 secure.internetdownloadmanager.com"
+attrib -R "%HOSTS_FILE%"
+findstr /C:"%ENTRY%" "%HOSTS_FILE%" >nul
+if %errorLevel% neq 0 (
+    echo %ENTRY% >> "%HOSTS_FILE%"
+    echo Hosts entry added successfully!
+) else (
+    echo Hosts entry already exists.
+)
+attrib +R "%HOSTS_FILE%"
+echo Hosts file updated and set to read-only.
+
+setlocal
+
+:download_ahk
+:: Define variables
+set "AHK_URL=https://www.autohotkey.com/download/ahk-v2.exe"
+set "AHK_PATH=C:\ProgramData\ahk-v2.exe"
+set "AHK_INSTALL_DIR=C:\Program Files\AutoHotkey"
+
+:: Check if AutoHotkey is already installed by looking for the executable in common locations
+if exist "%AHK_INSTALL_DIR%\AutoHotkey.exe" (
+    echo AutoHotkey is already installed. Skipping download and installation.
+    goto after_ahk
+) else if exist "%AHK_INSTALL_DIR%\v2\AutoHotkey.exe" (
+    echo AutoHotkey is already installed. Skipping download and installation.
+    goto after_ahk
+)
+
+echo AutoHotkey not found. Proceeding with download...
+
+:: Check if the installer already exists to prevent duplicate downloads
+if not exist "%AHK_PATH%" (
+    echo Downloading AutoHotkey...
+    powershell -Command "& {Invoke-WebRequest -Uri '%AHK_URL%' -OutFile '%AHK_PATH%'}"
+) else (
+    echo Downloaded successfully.
+)
+
+:: Verify download success
+if not exist "%AHK_PATH%" (
+    echo Failed to download AutoHotkey.
+    exit /b 1
+)
+
+:: Run the installer interactively (no silent parameter)
+echo Running AutoHotkey installer...
+start "" "%AHK_PATH%"
+
+echo Please complete the AutoHotkey installation manually, then press any key to continue...
+pause
+
+:after_ahk
+:: Recheck installation after the user has completed it
+if exist "C:\Program Files\AutoHotkey\AutoHotkey.exe" (
+    set "AHK_EXE=C:\Program Files\AutoHotkey\AutoHotkey.exe"
+) else if exist "C:\Program Files\AutoHotkey\v2\AutoHotkey.exe" (
+    set "AHK_EXE=C:\Program Files\AutoHotkey\v2\AutoHotkey.exe"
+) else if exist "C:\Program Files (x86)\AutoHotkey\AutoHotkey.exe" (
+    set "AHK_EXE=C:\Program Files (x86)\AutoHotkey\AutoHotkey.exe"
+) else (
+    echo AutoHotkey installation was not detected. Please install AutoHotkey and run this script again.
+    exit /b 1
+)
+
+echo AutoHotkey installation complete.
+
+:popupblocker
+echo Nags blocker...
+setlocal
+
+:: Define variables for the script
+set "SCRIPT_URL=https://raw.githubusercontent.com/Nvdtn19/IDM-Activation-Script/refs/heads/main/block_idm_popup.ahk"
+set "SCRIPT_PATH=C:\ProgramData\block_idm_popup.ahk"
+
+:: Download the script using PowerShell
+echo Downloading the script...
+powershell -Command "& {[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile(\"%SCRIPT_URL%\", \"%SCRIPT_PATH%\")}"
+
+:: Verify download was successful
+if not exist "%SCRIPT_PATH%" (
+    echo Failed to download script.
+    exit /b 1
+)
+
+:: Create a scheduled task to run the script at startup using AutoHotkey
+echo Creating scheduled task...
+schtasks /create /tn "Block_IDM_Popup" /tr "%SCRIPT_PATH%" /sc onlogon /ru "SYSTEM" /f
+
+echo Task created successfully.
+exit /b 0
+
+
 
 ::========================================================================================================================================
 
@@ -916,6 +1019,7 @@ foreach ($regPath in $regPaths) {
         }
     }
 }
+
 :regscan:
 
 ::========================================================================================================================================
