@@ -10,13 +10,15 @@
 #SingleInstance Force
 SetTimer(HideIDMPopups, 500) ; Run every 500ms
 
+
 HideIDMPopups() {
     idmWindow := WinExist("Internet Download Manager")
     if idmWindow {
-        winText := WinGetText(idmWindow) ; Retrieve window text in AHK v2
+        winText := WinGetText(idmWindow)
         if winText && (InStr(winText, "Your browser may not open IDM website because an important system file is damaged on your computer") 
-                    || InStr(winText, "Do you want to register your copy of IDM now?")) {
-            WinHide(idmWindow) ; Hide the window
+                    || InStr(winText, "Do you want to register your copy of IDM now?")
+                    || InStr(winText, "IDM is not registered in 30 days")) {
+            WinHide(idmWindow)
         }
     }
 }
