@@ -1,4 +1,4 @@
-@set iasver=1.2
+@set iasver=1.3
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -7,11 +7,13 @@
 ::============================================================================
 ::
 ::   IDM Activation Script (IAS)
+::   This is a fork of WindowsAddict's IDM Activation Script
+::   that aims to block IDM's nags after freezeing the trial period.
 ::
-::   Homepages: https://github.com/WindowsAddict/IDM-Activation-Script
-::              https://massgrave.dev/idm-activation-script
+::   Homepages: https://github.com/Nvdtn19/IDM-Activation-Script
+::              
 ::
-::       Email: windowsaddict@protonmail.com
+::   
 ::
 ::============================================================================
 
@@ -401,7 +403,7 @@ echo:
 echo:
 echo:
 echo:
-echo:                This script is NOT working with latest IDM.     
+echo:                     
 echo:            ___________________________________________________ 
 echo:                                                               
 echo:               [1] Freeze Trial
