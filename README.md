@@ -78,15 +78,17 @@ Not available yet
 ## Troubleshoot
 
 -   Browser Integration Fix: [Chrome](https://www.internetdownloadmanager.com/register/new_faq/bi9.html) - [Firefox](https://www.internetdownloadmanager.com/register/new_faq/bi4.html)
--   Raise the issue on [Github](https://github.com/WindowsAddict/IDM-Activation-Script) with screenshots.
+-   Raise the issue on [Github](https://github.com/Nvdtn19/IDM-Activation-Script) with screenshots.
 
 ## Changelog
 
 #### v1.3
+[This release is unofficial and not from the original author of the script since this is a fork]
+
 -   New features: [Block IDM Nags](https://www.reddit.com/r/Piracy/comments/1c65bb5/any_idea_how_to_prevent_this_popup_from_appearing/) after freezing the trial period. How this methods works:
   - Block the ```secure.internetdownloadmanager.com``` domain in the hosts file to prevent license check. The nags window is actually come from that domain. There should be no issues that affect IDM if that domain is blocked.
   - When the trial period is expired, IDM will try to load the nags from that domain and shows to the user. But since that domain is now blocked, IDM will failed to load it and instead, shows another nags popup, "Your browser may not open IDM website because an important system file is damaged on your computer. Repair this file?" everytime it tries to show the original nags.
-  - So we have created an [AutoHotKey script](https://github.com/Nvdtn19/IDM-Activation-Script/blob/main/block_idm_popup.ahk) script that also auto block this kind of nags! The script will download the AutoHotKey software and then configure the popup blocker script (that depends on AutoHotKey) to always run in the background, so it can track and block any kinds of annoying IDM popups.
+  - So we have created an [AutoHotKey script](https://github.com/Nvdtn19/IDM-Activation-Script/blob/main/block_idm_popup.ahk) script that also auto hide this kind of nags! The AutoHotKey script is always run in the background, so it can track and block any kinds of annoying IDM popups.
 
 #### v1.2
 
