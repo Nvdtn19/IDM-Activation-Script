@@ -16,7 +16,7 @@ Last Release - v1.3 (29-Mar-2025)
 
 #### OS requirement
 
--   The project is untested on Windows 7/8/8.1. Use it at your own risk. Only Windows 10 and 11 is tested.
+-   The project is supported only on Windows 7/8/8.1/10/11, with all important updates installed.
 -   The PowerShell method to run IAS is supported on Windows 8 and higher.
 
 
