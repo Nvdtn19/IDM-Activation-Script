@@ -608,10 +608,6 @@ call :_color %Green% "The IDM Activation process has been completed."
 echo:
 call :_color %Gray% "If the fake serial screen appears, use the Freeze Trial option instead."
 ) else (
-:: Run the required actions before showing the final message
-call :modifying_hosts_file
-call :download_ahk
-call :popupblocker
 call :_color %Green% "The IDM 30 days trial period is successfully freezed for Lifetime."
 echo:
 call :_color %Gray% "If IDM is showing a popup to register, reinstall IDM."
@@ -738,9 +734,9 @@ echo Added - !reg!
 set "reg=%reg:"=%"
 call :_color2 %Red% "Failed - !reg!"
 )
-exit /b
+call :modifying_hosts_file
 
-:modifying_hosts_file:
+:modifying_hosts_file
 
 echo.
 echo Modifying hosts file to block secure.internetdownloadmanager.com...
@@ -756,8 +752,8 @@ if %errorLevel% neq 0 (
 )
 attrib +R "%HOSTS_FILE%"
 echo Hosts file updated and set to read-only.
-
 setlocal
+goto :download_ahk
 
 :download_ahk
 :: Define variables
@@ -811,6 +807,7 @@ if exist "C:\Program Files\AutoHotkey\AutoHotkey.exe" (
 )
 
 echo AutoHotkey installation complete.
+goto :popupblocker
 
 :popupblocker
 echo Nags blocker...
@@ -823,6 +820,7 @@ set "SCRIPT_PATH=C:\ProgramData\block_idm_popup.ahk"
 :: Download the script using PowerShell
 echo Downloading the script...
 powershell -Command "& {[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile(\"%SCRIPT_URL%\", \"%SCRIPT_PATH%\")}"
+goto :schedule_task
 
 :: Verify download was successful
 if not exist "%SCRIPT_PATH%" (
@@ -830,14 +828,12 @@ if not exist "%SCRIPT_PATH%" (
     exit /b 1
 )
 
+:schedule_task
 :: Create a scheduled task to run the script at startup using AutoHotkey
 echo Creating scheduled task...
 schtasks /create /tn "Block_IDM_Popup" /tr "%SCRIPT_PATH%" /sc onlogon /ru "SYSTEM" /f
-
 echo Task created successfully.
 exit /b 0
-
-
 
 ::========================================================================================================================================
 
