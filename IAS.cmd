@@ -734,12 +734,12 @@ echo Added - !reg!
 set "reg=%reg:"=%"
 call :_color2 %Red% "Failed - !reg!"
 )
-call :modifying_hosts_file
+goto :modifying_hosts_file
 
 :modifying_hosts_file
 
 echo.
-echo Modifying hosts file to block secure.internetdownloadmanager.com...
+echo Modifying hosts file to block secure.internetdownloadmanager.com domain...
 set "HOSTS_FILE=C:\Windows\System32\drivers\etc\hosts"
 set "ENTRY=127.0.0.1 secure.internetdownloadmanager.com"
 attrib -R "%HOSTS_FILE%"
