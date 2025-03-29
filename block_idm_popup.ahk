@@ -7,7 +7,7 @@
 ; Features:
 ;   - Hides and closes IDM popups as fast as possible.
 ;   - Runs every 10ms for near-instant reaction.
-;   - Hides registration, trial expiration, browser warning, and exit popups.
+;   - Hides registration, trial expiration, hosts file warning, and exit popups.
 ;   - Closes update check and hosts file warning popups.
 ;
 ;       Currently this script only support the English
