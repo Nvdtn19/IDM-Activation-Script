@@ -29,6 +29,7 @@ HideOrCloseIDMPopups() {
         if winText {
             if (InStr(winText, "Your browser may not open IDM website because an important system file is damaged on your computer") 
              || InStr(winText, "Do you want to register your copy of IDM now?")
+             || InStr(winText, "fake Serial Number")
              || InStr(winText, "IDM has not been registered for 30 days. Trial period is over")
              || InStr(winText, "IDM is exiting...")) { ; Hides exit message
                 WinHide(idmWindow) ; Hide these popups ASAP
