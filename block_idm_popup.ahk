@@ -6,7 +6,7 @@
 ;
 ; Features:
 ;   - Hides and closes IDM popups as fast as possible.
-;   - Runs every 10ms for near-instant reaction.
+;   - Runs every 100ms for near-instant reaction.
 ;     Though, don't worries, that won't leading to high CPU/RAM usage. 
 ;     It only use up to 1MB of RAM, even on weak computer.
 ;   - Hides registration, trial expiration, hosts file warning, and exit popups.
@@ -20,7 +20,7 @@
 ; ==============================================
 
 #SingleInstance Force
-SetTimer(HideOrCloseIDMPopups, 10) ; Run every 10ms for faster response
+SetTimer(HideOrCloseIDMPopups, 100) ; Run every 100ms for faster response
 
 HideOrCloseIDMPopups() {
     idmWindow := WinExist("Internet Download Manager")

@@ -831,7 +831,7 @@ if not exist "%SCRIPT_PATH%" (
 :schedule_task
 :: Create a scheduled task to run the script at startup using AutoHotkey
 echo Creating scheduled task...
-schtasks /create /tn "Block_IDM_Popup" /tr "%SCRIPT_PATH%" /sc onlogon /ru "SYSTEM" /f
+schtasks /create /tn "Block_IDM_Popup" /tr "%SCRIPT_PATH%" /sc onstart /ru "SYSTEM" /f /rl HIGHEST /start "ON" /sc ONSTART /miss ON /Z
 echo Task created successfully.
 exit /b 0
 

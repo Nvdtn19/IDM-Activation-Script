@@ -12,7 +12,7 @@ A fork of [WindowsAddict's IDM Activation Script (archived)](https://github.com/
 
 ## IAS Latest Release
 
-Last Release - v1.3 (29-Mar-2025)
+Last Release - v1.4 (19-Apr-2025)
 
 #### OS requirement
 
@@ -81,6 +81,15 @@ Not available yet
 -   Raise the issue on [Github](https://github.com/Nvdtn19/IDM-Activation-Script) with screenshots.
 
 ## Changelog
+
+#### v1.4
+The scheduled task for blocking IDM popups will now:
+- Run at startup (not just on logon).
+- Ensure it runs with the highest privileges.
+- Ensure it runs regardless of AC power state.
+- Ensure it runs as soon as possible after a scheduled start is missed.
+- Remove the "stop the task if it runs longer than..." condition
+Also, the AHK script will now run every 100ms instead of 10ms to prevent from high resource usage (although it is almost zero)
 
 #### v1.3
 [This release is unofficial and not from the original author of the script since this is a fork]
