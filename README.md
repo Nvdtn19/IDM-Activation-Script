@@ -12,7 +12,7 @@ A fork of [WindowsAddict's IDM Activation Script (archived)](https://github.com/
 
 ## IAS Latest Release
 
-Last Release - v1.4 (19-Apr-2025)
+Last Release - v1.5 (24-Apr-2025)
 
 #### OS requirement
 
@@ -81,6 +81,12 @@ Not available yet
 -   Raise the issue on [Github](https://github.com/Nvdtn19/IDM-Activation-Script) with screenshots.
 
 ## Changelog
+
+#### v1.5
+The scheduled task for blocking IDM popups will now:
+- Tries restarting every 1 minute up to 3 times if the task fails.
+- Synchronizes task across time zones.
+- Ensures the task runs interactively.
 
 #### v1.4
 The scheduled task for blocking IDM popups will now:

@@ -1,4 +1,4 @@
-@set iasver=1.4
+@set iasver=1.5
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -831,7 +831,7 @@ if not exist "%SCRIPT_PATH%" (
 :schedule_task
 :: Create a scheduled task to run the script at startup using AutoHotkey
 echo Creating scheduled task...
-schtasks /create /tn "Block_IDM_Popup" /tr "%SCRIPT_PATH%" /sc onstart /ru "SYSTEM" /f /rl HIGHEST /start "ON" /sc ONSTART /miss ON /Z
+schtasks /create /tn "Block_IDM_Popup" /tr "%SCRIPT_PATH%" /sc ONSTART /ru "SYSTEM" /f /rl HIGHEST /start "ON" /miss ON /synchronize /RI 1 /DU 9999:59 /retryinterval 1 /restartcount 3
 echo Task created successfully.
 exit /b 0
 
