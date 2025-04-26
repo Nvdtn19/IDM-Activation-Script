@@ -829,28 +829,57 @@ if not exist "%SCRIPT_PATH%" (
 )
 
 :schedule_task
-:: Download the XML of scheduled task and import it to Task Scheduler
-setlocal
+setlocal enabledelayedexpansion
 
-REM Define the URL of the XML file and the desired task name
+REM Define variables
 set "xml_url=https://raw.githubusercontent.com/Nvdtn19/IDM-Activation-Script/refs/heads/main/block_idm_popup_task_scheduler.xml"
 set "task_name=BlockIDMPopup"
 set "temp_xml_file=%TEMP%\%task_name%.xml"
 
-REM Function to download the XML file
-:download_xml
+REM Download the XML file
 echo Downloading XML file...
-powershell -Command "& {[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile(\"%xml_url%\", \"%temp_xml_file%\")}"
-
-REM Import the XML file into Task Scheduler
-echo Importing XML file into Task Scheduler...
-schtasks /create /tn "%task_name%" /xml "%temp_xml_file%"
+(
+    PowerShell -Command "
+        try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            (New-Object System.Net.WebClient).DownloadFile('%xml_url%', '%temp_xml_file%')
+            exit 0
+        } catch {
+            Write-Error ""$Error[0].Exception.Message""
+            exit 1
+        }
+    "
+) 2>&1 | findstr /v "ERROR:" > nul
 if %errorlevel% neq 0 (
-    echo Failed to import task.  Errorlevel: %errorlevel%
+    echo Failed to download XML file. Exiting.
     goto :end
 )
 
-echo Task "%task_name%" successfully created.
+REM Get the current user's SID
+echo Getting current user's SID...
+for /f "tokens=2 delims==" %%a in ('wmic useraccount where name="%username%" get sid /format:list ^| findstr "="') do set "user_sid=%%a"
+echo Current User SID: !user_sid!
+
+REM Replace the UserId in the XML file
+echo Replacing UserId in XML...
+set "replaced_xml_file=%TEMP%\%task_name%_modified.xml"
+(
+    for /f "tokens=*" %%a in ('type "%temp_xml_file%"') do (
+        set "line=%%a"
+        set "modified_line=!line:S-1-5-21-3290808777-3659081889-2405223154-1002=!user_sid!"
+        echo !modified_line! >> "%replaced_xml_file%"
+    )
+)
+
+REM Import the modified XML into Task Scheduler
+echo Importing modified XML into Task Scheduler...
+schtasks /create /tn "%task_name%" /xml "%replaced_xml_file%"
+if %errorlevel% neq 0 (
+    echo Failed to import task. Errorlevel: %errorlevel%
+    goto :end
+)
+
+echo Task "%task_name%" successfully created with current user's SID.
 
 :end
 endlocal
