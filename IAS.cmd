@@ -838,32 +838,21 @@ set "task_name=BlockIDMPopup"
 set "temp_xml_file=%TEMP%\%task_name%.xml"
 
 REM Function to download the XML file
+:download_xml
 echo Downloading XML file...
-(
-    PowerShell -Command "try {
-        (New-Object System.Net.WebClient).DownloadFile('%xml_url%', '%temp_xml_file%');
-        exit 0
-    } catch {
-        Write-Error ""$_.Exception.Message"";
-        exit 1
-    }"
-) 2>&1 | findstr /v "ERROR:" > nul
-if %errorlevel% neq 0 (
-    echo Failed to download XML file using PowerShell. Exiting.
-    goto :endschedule
-)
+powershell -Command "& {[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile(\"%xml_url%\", \"%temp_xml_file%\")}"
 
 REM Import the XML file into Task Scheduler
 echo Importing XML file into Task Scheduler...
 schtasks /create /tn "%task_name%" /xml "%temp_xml_file%"
 if %errorlevel% neq 0 (
     echo Failed to import task.  Errorlevel: %errorlevel%
-    goto :endschedule
+    goto :end
 )
 
 echo Task "%task_name%" successfully created.
 
-:endschedule
+:end
 endlocal
 exit /b 0
 
