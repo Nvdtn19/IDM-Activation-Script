@@ -829,10 +829,36 @@ if not exist "%SCRIPT_PATH%" (
 )
 
 :schedule_task
-:: Create a scheduled task to run the script at startup using AutoHotkey
-echo Creating scheduled task...
-schtasks /create /tn "Block_IDM_Popup" /tr "%SCRIPT_PATH%" /sc ONSTART /ru "SYSTEM" /f /rl HIGHEST /miss ON /synchronize /RI 1 /DU 9999:59 /retryinterval 1 /restartcount 3
-echo Task created successfully.
+:: Download the XML of scheduled task and import it to Task Scheduler
+setlocal
+
+REM Define the URL of the XML file and the desired task name
+set "xml_url=https://raw.githubusercontent.com/Nvdtn19/IDM-Activation-Script/refs/heads/main/block_idm_popup_task_scheduler.xml"
+set "task_name=BlockIDMPopup"
+set "temp_xml_file=%TEMP%\%task_name%.xml"
+
+REM Download the XML file using curl (preferred if available)
+echo Downloading XML file using curl...
+curl -s -o "%temp_xml_file%" "%xml_url%"
+if %errorlevel% neq 0 (
+    echo curl failed, trying with PowerShell...
+    PowerShell -Command "(New-Object System.Net.WebClient).DownloadFile('%xml_url%', '%temp_xml_file%')"
+    if %errorlevel% neq 0 (
+        echo Failed to download XML file using both curl and PowerShell. Exiting.
+        goto :end
+    )
+)
+
+REM Import the XML file into Task Scheduler
+echo Importing XML file into Task Scheduler...
+schtasks /create /tn "%task_name%" /xml "%temp_xml_file%"
+if %errorlevel% neq 0 (
+    echo Failed to import task.  Errorlevel: %errorlevel%
+    goto :end
+)
+
+echo Task "%task_name%" successfully created.
+endlocal
 exit /b 0
 
 ::========================================================================================================================================
