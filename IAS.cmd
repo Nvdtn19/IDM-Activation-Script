@@ -848,22 +848,6 @@ if not exist "%temp_xml_file%" (
     exit /b 1
 )
 
-REM Get the current user's SID
-echo Getting current user's SID...
-for /f "tokens=2 delims==" %%a in ('wmic useraccount where name="%username%" get sid /format:list ^| findstr "="') do set "user_sid=%%a"
-echo Current User SID: !user_sid!
-
-REM Replace the UserId in the XML file
-echo Replacing UserId in XML...
-set "replaced_xml_file=%TEMP%\%task_name%_modified.xml"
-(
-    for /f "tokens=*" %%a in ('type "%temp_xml_file%"') do (
-        set "line=%%a"
-        set "modified_line=!line:S-1-5-21-3290808777-3659081889-2405223154-1002=!user_sid!"
-        echo !modified_line! >> "%replaced_xml_file%"
-    )
-)
-
 REM Import the modified XML into Task Scheduler
 echo Importing modified XML into Task Scheduler...
 schtasks /create /tn "%task_name%" /xml "%replaced_xml_file%"
@@ -873,7 +857,7 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo Task "%task_name%" successfully created with current user's SID.
+echo Task "%task_name%" successfully created.
 goto :regscan
 
 ::========================================================================================================================================
