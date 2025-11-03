@@ -764,10 +764,8 @@ set "AHK_INSTALL_DIR=C:\Program Files\AutoHotkey"
 :: Check if AutoHotkey is already installed by looking for the executable in common locations
 if exist "%AHK_INSTALL_DIR%\AutoHotkey.exe" (
     echo AutoHotkey is already installed. Skipping download and installation.
-    goto after_ahk
 ) else if exist "%AHK_INSTALL_DIR%\v2\AutoHotkey.exe" (
     echo AutoHotkey is already installed. Skipping download and installation.
-    goto after_ahk
 )
 
 echo AutoHotkey not found. Proceeding with download...
@@ -841,7 +839,7 @@ if %errorlevel% neq 0 (
 )
 echo Task "%task_name%" successfully created.
 pause
-goto :regscan
+goto regscan
 
 ::========================================================================================================================================
 
