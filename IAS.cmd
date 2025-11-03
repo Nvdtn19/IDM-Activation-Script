@@ -792,23 +792,6 @@ start "" "%AHK_PATH%"
 
 echo Please complete the AutoHotkey installation manually, then press any key to continue...
 pause
-goto after_ahk
-
-:after_ahk
-:: Recheck installation after the user has completed it
-if exist "C:\Program Files\AutoHotkey\AutoHotkey.exe" (
-    set "AHK_EXE=C:\Program Files\AutoHotkey\AutoHotkey.exe"
-) else if exist "C:\Program Files\AutoHotkey\v2\AutoHotkey.exe" (
-    set "AHK_EXE=C:\Program Files\AutoHotkey\v2\AutoHotkey.exe"
-) else if exist "C:\Program Files (x86)\AutoHotkey\AutoHotkey.exe" (
-    set "AHK_EXE=C:\Program Files (x86)\AutoHotkey\AutoHotkey.exe"
-) else (
-    echo AutoHotkey installation was not detected. Please install AutoHotkey and run this script again.
-    pause
-    exit /b 1
-)
-
-echo AutoHotkey installation complete.
 goto :popupblocker
 
 :popupblocker
@@ -851,14 +834,13 @@ if not exist "%temp_xml_file%" (
 REM Import the modified XML into Task Scheduler
 echo Importing modified XML into Task Scheduler...
 schtasks /create /tn "%task_name%" /xml "%temp_xml_file%"
-pause
 if %errorlevel% neq 0 (
     echo Failed to import task. Errorlevel: %errorlevel%
     pause
     exit /b 1
 )
-
 echo Task "%task_name%" successfully created.
+pause
 goto :regscan
 
 ::========================================================================================================================================
