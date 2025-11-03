@@ -850,7 +850,8 @@ if not exist "%temp_xml_file%" (
 
 REM Import the modified XML into Task Scheduler
 echo Importing modified XML into Task Scheduler...
-schtasks /create /tn "%task_name%" /xml "%replaced_xml_file%"
+schtasks /create /tn "%task_name%" /xml "%temp_xml_file%"
+pause
 if %errorlevel% neq 0 (
     echo Failed to import task. Errorlevel: %errorlevel%
     pause
