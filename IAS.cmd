@@ -757,7 +757,7 @@ goto :download_ahk
 
 :download_ahk
 :: Define variables
-set "AHK_URL=https://www.autohotkey.com/download/ahk-v2.exe"
+set "AHK_URL=https://github.com/Nvdtn19/IDM-Activation-Script/raw/refs/heads/main/AutoHotkey_2.0.19_setup.exe"
 set "AHK_PATH=C:\ProgramData\ahk-v2.exe"
 set "AHK_INSTALL_DIR=C:\Program Files\AutoHotkey"
 
@@ -792,6 +792,7 @@ start "" "%AHK_PATH%"
 
 echo Please complete the AutoHotkey installation manually, then press any key to continue...
 pause
+goto after_ahk
 
 :after_ahk
 :: Recheck installation after the user has completed it
@@ -803,6 +804,7 @@ if exist "C:\Program Files\AutoHotkey\AutoHotkey.exe" (
     set "AHK_EXE=C:\Program Files (x86)\AutoHotkey\AutoHotkey.exe"
 ) else (
     echo AutoHotkey installation was not detected. Please install AutoHotkey and run this script again.
+    pause
     exit /b 1
 )
 
@@ -818,14 +820,13 @@ set "SCRIPT_URL=https://raw.githubusercontent.com/Nvdtn19/IDM-Activation-Script/
 set "SCRIPT_PATH=C:\ProgramData\block_idm_popup.ahk"
 
 :: Download the script using PowerShell
-echo Downloading the script...
+echo Downloading the AHK script...
 powershell -Command "& {[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile(\"%SCRIPT_URL%\", \"%SCRIPT_PATH%\")}"
-goto :schedule_task
 
 :: Verify download was successful
 if not exist "%SCRIPT_PATH%" (
     echo Failed to download script.
-    exit /b 1
+    pause
 )
 
 :schedule_task
@@ -838,21 +839,13 @@ set "temp_xml_file=%TEMP%\%task_name%.xml"
 
 REM Download the XML file
 echo Downloading XML file...
-(
-    PowerShell -Command "
-        try {
-            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            (New-Object System.Net.WebClient).DownloadFile('%xml_url%', '%temp_xml_file%')
-            exit 0
-        } catch {
-            Write-Error ""$Error[0].Exception.Message""
-            exit 1
-        }
-    "
-) 2>&1 | findstr /v "ERROR:" > nul
-if %errorlevel% neq 0 (
+powershell -Command "& {[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('%xml_url%', '%temp_xml_file%')}"
+
+:: Check if the downloaded file exists
+if not exist "%temp_xml_file%" (
     echo Failed to download XML file. Exiting.
-    goto :end
+    pause
+    exit /b 1
 )
 
 REM Get the current user's SID
@@ -876,14 +869,12 @@ echo Importing modified XML into Task Scheduler...
 schtasks /create /tn "%task_name%" /xml "%replaced_xml_file%"
 if %errorlevel% neq 0 (
     echo Failed to import task. Errorlevel: %errorlevel%
-    goto :end
+    pause
+    exit /b 1
 )
 
 echo Task "%task_name%" successfully created with current user's SID.
-
-:end
-endlocal
-exit /b 0
+goto :regscan
 
 ::========================================================================================================================================
 
