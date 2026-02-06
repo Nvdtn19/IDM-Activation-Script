@@ -2,22 +2,12 @@
 @setlocal DisableDelayedExpansion
 @echo off
 
-
-
 ::============================================================================
 ::
 ::   IDM Activation Script (IAS)
-::   This is a fork of WindowsAddict's IDM Activation Script
-::   that aims to block IDM's nags after freezeing the trial period.
-::
-::   Homepages: https://github.com/Nvdtn19/IDM-Activation-Script
-::              
-::
-::   
+::   Modified to fix Freeze logic and use local files for Popup Blocker
 ::
 ::============================================================================
-
-
 
 ::  To activate, run the script with "/act" parameter or change 0 to 1 in below line
 set _activate=0
@@ -29,20 +19,20 @@ set _freeze=0
 set _reset=0
 
 ::  If value is changed in above lines or parameter is used then script will run in unattended mode
+set "_cmdf=%~f0"
+if defined _activate if %_activate%==1 set _unattended=1
+if defined _freeze if %_freeze%==1 set _unattended=1
+if defined _reset if %_reset%==1 set _unattended=1
 
 ::========================================================================================================================================
 
-::  Set Path variable, it helps if it is misconfigured in the system
-
+::  Set Path variable
 set "PATH=%SystemRoot%\System32;%SystemRoot%\System32\wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\"
 if exist "%SystemRoot%\Sysnative\reg.exe" (
 set "PATH=%SystemRoot%\Sysnative;%SystemRoot%\Sysnative\wbem;%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\;%PATH%"
 )
 
-:: Re-launch the script with x64 process if it was initiated by x86 process on x64 bit Windows
-:: or with ARM64 process if it was initiated by x86/ARM32 process on ARM64 Windows
-
-set "_cmdf=%~f0"
+:: Re-launch checks (x64/ARM)
 for %%# in (%*) do (
 if /i "%%#"=="r1" set r1=1
 if /i "%%#"=="r2" set r2=1
@@ -53,8 +43,6 @@ setlocal EnableDelayedExpansion
 start %SystemRoot%\Sysnative\cmd.exe /c ""!_cmdf!" %* r1"
 exit /b
 )
-
-:: Re-launch the script with ARM32 process if it was initiated by x64 process on ARM64 Windows
 
 if exist %SystemRoot%\SysArm32\cmd.exe if %PROCESSOR_ARCHITECTURE%==AMD64 if not defined r2 (
 setlocal EnableDelayedExpansion
@@ -67,28 +55,20 @@ exit /b
 set "blank="
 set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 
-::  Check if Null service is working, it's important for the batch script
-
+::  Check Null service
 sc query Null | find /i "RUNNING"
 if %errorlevel% NEQ 0 (
 echo:
 echo Null service is not running, script may crash...
-echo:
-echo:
-echo Help - %mas%idm-activation-script.html#Troubleshoot
-echo:
-echo:
 ping 127.0.0.1 -n 10
 )
 cls
 
 ::  Check LF line ending
-
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
 echo Error: Script either has LF line ending issue or an empty line at the end of the script is missing.
-echo:
 ping 127.0.0.1 -n 6 >nul
 popd
 exit /b
@@ -117,8 +97,6 @@ if /i "%%A"=="/act" set _activate=1
 )
 
 for %%A in (%_activate% %_freeze% %_reset%) do (if "%%A"=="1" set _unattended=1)
-
-::========================================================================================================================================
 
 set "nul1=1>nul"
 set "nul2=2>nul"
@@ -172,10 +150,6 @@ echo Unable to find powershell.exe in the system.
 goto done2
 )
 
-::========================================================================================================================================
-
-::  Fix for the special characters limitation in path name
-
 set "_work=%~dp0"
 if "%_work:~-1%"=="\" set "_work=%_work:~0,-1%"
 
@@ -190,8 +164,6 @@ set "_ttemp=%userprofile%\AppData\Local\Temp"
 
 setlocal EnableDelayedExpansion
 
-::========================================================================================================================================
-
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
@@ -203,51 +175,26 @@ goto done2
 )
 )
 
-::========================================================================================================================================
-
-::  Check PowerShell
-
-REM :PowerShellTest: $ExecutionContext.SessionState.LanguageMode :PowerShellTest:
-
 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PowerShellTest:\s*';iex ($f[1])" | find /i "FullLanguage" %nul1% || (
 %eline%
 %psc% $ExecutionContext.SessionState.LanguageMode
 echo:
 echo PowerShell is not working. Aborting...
-echo If you have applied restrictions on Powershell then undo those changes.
-echo:
-echo Check this page for help. %mas%idm-activation-script.html#Troubleshoot
 goto done2
 )
-
-::========================================================================================================================================
-
-::  Elevate script as admin and pass arguments and preventing loop
 
 %nul1% fltmc || (
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
 echo This script requires admin privileges.
-echo To do so, right click on this script and select 'Run as administrator'.
 goto done2
 )
 
-::========================================================================================================================================
-
-::  Disable QuickEdit and launch from conhost.exe to avoid Terminal app
-
 set quedit=
 set terminal=
-
 if %_unattended%==1 (
 set quedit=1
 set terminal=1
-)
-
-for %%# in (%_args%) do (if /i "%%#"=="-qedit" set quedit=1)
-
-if %winbuild% LSS 10586 (
-reg query HKCU\Console /v QuickEdit %nul2% | find /i "0x0" %nul1% && set quedit=1
 )
 
 if %winbuild% GEQ 17763 (
@@ -265,55 +212,17 @@ if defined quedit goto :skipQE
 %launchcmd% "%d1% %d2% %d3% %d4% & cmd.exe '/c' '!_PSarg! -qedit'" &exit /b
 :skipQE
 
-::========================================================================================================================================
-
-::  Check for updates
-
-set -=
-set old=
-
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 iasupdatecheck.mass%-%grave.dev') do (
-if not [%%#]==[] (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%iasver%" %nul1% || set old=1))
-)
-
-if defined old (
-echo ________________________________________________
-%eline%
-echo You are running outdated version IAS %iasver%
-echo ________________________________________________
-echo:
-if not %_unattended%==1 (
-echo [1] Get Latest IAS
-echo [0] Continue Anyway
-echo:
-call :_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
-choice /C:10 /N
-if !errorlevel!==2 rem
-if !errorlevel!==1 (start https://github.com/WindowsAddict/IDM-Activation-Script & start %mas%/idm-activation-script & exit /b)
-)
-)
-
-::========================================================================================================================================
-
 cls
 title  IDM Activation Script %iasver%
 
 echo:
 echo Initializing...
 
-::  Check WMI
-
 %psc% "Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property CreationClassName" %nul2% | find /i "computersystem" %nul1% || (
 %eline%
-%psc% "Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property CreationClassName"
-echo:
 echo WMI is not working. Aborting...
-echo:
-echo Check this page for help. %mas%idm-activation-script.html#Troubleshoot
 goto done2
 )
-
-::  Check user account SID
 
 set _sid=
 for /f "delims=" %%a in ('%psc% "([System.Security.Principal.NTAccount](Get-WmiObject -Class Win32_ComputerSystem).UserName).Translate([System.Security.Principal.SecurityIdentifier]).Value" %nul6%') do (set _sid=%%a)
@@ -327,14 +236,8 @@ reg query HKU\%_sid%\Software %nul% || (
 echo:
 echo [%_sid%]
 echo User Account SID not found. Aborting...
-echo:
-echo Check this page for help. %mas%idm-activation-script.html#Troubleshoot
 goto done2
 )
-
-::========================================================================================================================================
-
-::  Check if the current user SID is syncing with the HKCU entries
 
 %nul% reg delete HKCU\IAS_TEST /f
 %nul% reg delete HKU\%_sid%\IAS_TEST /f
@@ -347,8 +250,6 @@ set HKCUsync=1
 
 %nul% reg delete HKCU\IAS_TEST /f
 %nul% reg delete HKU\%_sid%\IAS_TEST /f
-
-::  Below code also works for ARM64 Windows 10 (including x64 bit emulation)
 
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set arch=%%b
 if /i not "%arch%"=="x86" set arch=x64
@@ -373,20 +274,13 @@ if %arch%==x86 set "IDMan=%ProgramFiles%\Internet Download Manager\IDMan.exe"
 if not exist %SystemRoot%\Temp md %SystemRoot%\Temp
 set "idmcheck=tasklist /fi "imagename eq idman.exe" | findstr /i "idman.exe" %nul1%"
 
-::  Check CLSID registry access
-
 %nul% reg add %CLSID2%\IAS_TEST
 %nul% reg query %CLSID2%\IAS_TEST || (
 %eline%
 echo Failed to write in %CLSID2%
-echo:
-echo Check this page for help. %mas%idm-activation-script.html#Troubleshoot
 goto done2
 )
-
 %nul% reg delete %CLSID2%\IAS_TEST /f
-
-::========================================================================================================================================
 
 if %_reset%==1 goto :_reset
 if %_activate%==1 (set frz=0&goto :_activate)
@@ -405,7 +299,8 @@ echo:
 echo:
 echo:                     
 echo:            ___________________________________________________ 
-echo:                                                               
+echo:            
+echo:                                                    
 echo:               [1] Freeze Trial
 echo:               [2] Activate
 echo:               [3] Reset Activation / Trial
@@ -504,9 +399,7 @@ set "reg="%%~A"" &reg query !reg! %nul% && call :del
 exit /b
 
 :del
-
 reg delete %reg% /f %nul%
-
 if "%errorlevel%"=="0" (
 set "reg=%reg:"=%"
 echo Deleted - !reg!
@@ -514,7 +407,6 @@ echo Deleted - !reg!
 set "reg=%reg:"=%"
 call :_color2 %Red% "Failed - !reg!"
 )
-
 exit /b
 
 ::========================================================================================================================================
@@ -550,19 +442,9 @@ echo You can download it from  https://www.internetdownloadmanager.com/download.
 goto done
 )
 
-:: Internet check with internetdownloadmanager.com ping and port 80 test
-
+:: Internet check (Optional but good to keep)
 set _int=
 for /f "delims=[] tokens=2" %%# in ('ping -n 1 internetdownloadmanager.com') do (if not [%%#]==[] set _int=1)
-
-if not defined _int (
-%psc% "$t = New-Object Net.Sockets.TcpClient;try{$t.Connect("""internetdownloadmanager.com""", 80)}catch{};$t.Connected" | findstr /i "true" %nul1% || (
-call :_color %Red% "Unable to connect internetdownloadmanager.com, aborting..."
-goto done
-)
-call :_color %Gray% "Ping command failed for internetdownloadmanager.com"
-echo:
-)
 
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName 2^>nul') do set "regwinos=%%b"
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set "regarch=%%b"
@@ -585,6 +467,7 @@ if not %HKCUsync%==1 reg export %CLSID2% "%SystemRoot%\Temp\_Backup_HKU-%_sid%_C
 call :delete_queue
 call :add_key
 
+:: THIS IS THE FIX: The script now actually executes this line instead of jumping over it!
 %psc% "$sid = '%_sid%'; $HKCUsync = %HKCUsync%; $lockKey = 1; $deleteKey = $null; $toggle = 1; $f=[io.file]::ReadAllText('!_batp!') -split ':regscan\:.*';iex ($f[1])"
 
 if %frz%==0 call :register_IDM
@@ -592,13 +475,17 @@ if %frz%==0 call :register_IDM
 call :download_files
 if not defined _fileexist (
 %eline%
-echo Error: Unable to download files with IDM.
+echo Error: Unable to verify dummy files were created.
 echo:
-echo Help: %mas%idm-activation-script.html#Troubleshoot
 goto :done
 )
 
 %psc% "$sid = '%_sid%'; $HKCUsync = %HKCUsync%; $lockKey = 1; $deleteKey = $null; $f=[io.file]::ReadAllText('!_batp!') -split ':regscan\:.*';iex ($f[1])"
+
+:: Call the Popup Blocker setup LAST, and only if local files exist
+if %frz%==1 (
+    call :setup_popup_blocker
+)
 
 echo:
 echo %line%
@@ -613,10 +500,11 @@ echo:
 call :_color %Gray% "If IDM is showing a popup to register, reinstall IDM."
 )
 
+goto done
+
 ::========================================================================================================================================
 
 :done
-
 echo %line%
 echo:
 echo:
@@ -632,9 +520,7 @@ pause %nul1%
 goto MainMenu
 
 :done2
-
 if %_unattended%==1 timeout /t 2 & exit /b
-
 if defined terminal (
 echo Press 0 key to exit...
 choice /c 0 /n
@@ -647,21 +533,17 @@ exit /b
 ::========================================================================================================================================
 
 :_rcont
-
 reg add %reg% %nul%
 call :add
 exit /b
 
 :register_IDM
-
 echo:
 echo Applying registration details...
 echo:
-
 set /a fname = %random% %% 9999 + 1000
 set /a lname = %random% %% 9999 + 1000
 set email=%fname%.%lname%@tonec.com
-
 for /f "delims=" %%a in ('%psc% "$key = -join ((Get-Random -Count  20 -InputObject ([char[]]('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'))));$key = ($key.Substring(0,  5) + '-' + $key.Substring(5,  5) + '-' + $key.Substring(10,  5) + '-' + $key.Substring(15,  5) + $key.Substring(20));Write-Output $key" %nul6%') do (set key=%%a)
 
 set "reg=HKCU\SOFTWARE\DownloadManager /v FName /t REG_SZ /d "%fname%"" & call :_rcont
@@ -678,21 +560,17 @@ set "reg=HKU\%_sid%\SOFTWARE\DownloadManager /v Serial /t REG_SZ /d "%key%"" & c
 exit /b
 
 :download_files
-
 echo:
 echo Triggering a few downloads to create certain registry keys, please wait...
 echo:
-
 set "file=%SystemRoot%\Temp\temp.png"
 set _fileexist=
-
 set link=https://www.internetdownloadmanager.com/images/idm_box_min.png
 call :download
 set link=https://www.internetdownloadmanager.com/register/IDMlib/images/idman_logos.png
 call :download
 set link=https://www.internetdownloadmanager.com/pictures/idm_about.png
 call :download
-
 echo:
 timeout /t 3 %nul1%
 %idmcheck% && taskkill /f /im idman.exe
@@ -700,13 +578,10 @@ if exist "%file%" del /f /q "%file%"
 exit /b
 
 :download
-
 set /a attempt=0
 if exist "%file%" del /f /q "%file%"
 start "" /B "%IDMan%" /n /d "%link%" /p "%SystemRoot%\Temp" /f temp.png
-
 :check_file
-
 timeout /t 1 %nul1%
 set /a attempt+=1
 if exist "%file%" set _fileexist=1&exit /b
@@ -716,17 +591,12 @@ goto :Check_file
 ::========================================================================================================================================
 
 :add_key
-
 echo:
 echo Adding registry key...
 echo:
-
 set "reg="%HKLM%" /v "AdvIntDriverEnabled2""
-
 reg add %reg% /t REG_DWORD /d "1" /f %nul%
-
 :add
-
 if "%errorlevel%"=="0" (
 set "reg=%reg:"=%"
 echo Added - !reg!
@@ -734,11 +604,21 @@ echo Added - !reg!
 set "reg=%reg:"=%"
 call :_color2 %Red% "Failed - !reg!"
 )
-goto :modifying_hosts_file
+:: REMOVED THE BAD GOTO HERE. Now it returns to allow Freezing.
+exit /b
 
-:modifying_hosts_file
+::========================================================================================================================================
+:: NEW POPUP BLOCKER SECTION (Local Files)
+::========================================================================================================================================
 
+:setup_popup_blocker
 echo.
+echo ==========================================================
+echo       Setting up Popup Blocker (Hosts + AHK)
+echo ==========================================================
+echo.
+
+:: 1. Modify Hosts File
 echo Modifying hosts file to block secure.internetdownloadmanager.com domain...
 set "HOSTS_FILE=C:\Windows\System32\drivers\etc\hosts"
 set "ENTRY=127.0.0.1 secure.internetdownloadmanager.com"
@@ -752,100 +632,88 @@ if %errorLevel% neq 0 (
 )
 attrib +R "%HOSTS_FILE%"
 echo Hosts file updated and set to read-only.
-setlocal
-goto :download_ahk
 
-:download_ahk
-:: Define variables
-set "AHK_URL=https://github.com/Nvdtn19/IDM-Activation-Script/raw/refs/heads/main/AutoHotkey_2.0.19_setup.exe"
-set "AHK_PATH=C:\ProgramData\ahk-v2.exe"
+:: 2. Install AutoHotkey from local directory
 set "AHK_INSTALL_DIR=C:\Program Files\AutoHotkey"
+set "LOCAL_AHK_SETUP=%~dp0AutoHotkey_2.0.19_setup.exe"
 
-:: Check if AutoHotkey is already installed by looking for the executable in common locations
-if exist "%AHK_INSTALL_DIR%\AutoHotkey.exe" (
-    echo AutoHotkey is already installed. Skipping download and installation.
-) else if exist "%AHK_INSTALL_DIR%\v2\AutoHotkey.exe" (
-    echo AutoHotkey is already installed. Skipping download and installation.
-)
-
-echo AutoHotkey not found. Proceeding with download...
-
-:: Check if the installer already exists to prevent duplicate downloads
-if not exist "%AHK_PATH%" (
-    echo Downloading AutoHotkey...
-    powershell -Command "& {Invoke-WebRequest -Uri '%AHK_URL%' -OutFile '%AHK_PATH%'}"
+if exist "%AHK_INSTALL_DIR%\v2\AutoHotkey.exe" (
+    echo AutoHotkey v2 is already installed.
 ) else (
-    echo Downloaded successfully.
+    if exist "%LOCAL_AHK_SETUP%" (
+        echo Installing AutoHotkey from local file...
+        start "" /wait "%LOCAL_AHK_SETUP%"
+        echo Please complete the AutoHotkey installation manually...
+        pause
+    ) else (
+        call :_color %Red% "Error: AutoHotkey installer not found in script directory!"
+        echo Expected: %LOCAL_AHK_SETUP%
+        echo Skipping Popup Blocker setup.
+        exit /b
+    )
 )
 
-:: Verify download success
-if not exist "%AHK_PATH%" (
-    echo Failed to download AutoHotkey.
-    exit /b 1
+:: 3. Copy AHK Script
+set "SCRIPT_SRC=%~dp0block_idm_popup.ahk"
+set "SCRIPT_DEST=C:\ProgramData\block_idm_popup.ahk"
+
+if exist "%SCRIPT_SRC%" (
+    echo Copying popup blocker script to C:\ProgramData...
+    copy /y "%SCRIPT_SRC%" "%SCRIPT_DEST%" >nul
+    if not exist "%SCRIPT_DEST%" (
+        call :_color %Red% "Failed to copy script file."
+        exit /b
+    )
+) else (
+    call :_color %Red% "Error: block_idm_popup.ahk not found in script directory!"
+    exit /b
 )
 
-:: Run the installer interactively (no silent parameter)
-echo Running AutoHotkey installer...
-start "" "%AHK_PATH%"
+:: 4. Import Task Scheduler XML
+set "XML_SRC=%~dp0block_idm_popup_task_scheduler.xml"
+set "TASK_NAME=BlockIDMPopup"
 
-echo Please complete the AutoHotkey installation manually, then press any key to continue...
-pause
-goto :popupblocker
-
-:popupblocker
-echo Nags blocker...
-setlocal
-
-:: Define variables for the script
-set "SCRIPT_URL=https://raw.githubusercontent.com/Nvdtn19/IDM-Activation-Script/refs/heads/main/block_idm_popup.ahk"
-set "SCRIPT_PATH=C:\ProgramData\block_idm_popup.ahk"
-
-:: Download the script using PowerShell
-echo Downloading the AHK script...
-powershell -Command "& {[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile(\"%SCRIPT_URL%\", \"%SCRIPT_PATH%\")}"
-
-:: Verify download was successful
-if not exist "%SCRIPT_PATH%" (
-    echo Failed to download script.
-    pause
+if exist "%XML_SRC%" (
+    echo Importing Task Scheduler XML...
+    schtasks /create /tn "%TASK_NAME%" /xml "%XML_SRC%" /f
+    if !errorlevel! neq 0 (
+        call :_color %Red% "Failed to import task automatically."
+        echo.
+        echo Please open Task Scheduler and import "%XML_SRC%" manually.
+        pause
+    ) else (
+        echo Task "%TASK_NAME%" successfully created.
+        :: Try to run it immediately
+        schtasks /run /tn "%TASK_NAME%" >nul 2>&1
+    )
+) else (
+    call :_color %Red% "Error: block_idm_popup_task_scheduler.xml not found!"
 )
 
-:schedule_task
-setlocal enabledelayedexpansion
-
-REM Define variables
-set "xml_url=https://raw.githubusercontent.com/Nvdtn19/IDM-Activation-Script/refs/heads/main/block_idm_popup_task_scheduler.xml"
-set "task_name=BlockIDMPopup"
-set "temp_xml_file=%TEMP%\%task_name%.xml"
-
-REM Download the XML file
-echo Downloading XML file...
-powershell -Command "& {[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('%xml_url%', '%temp_xml_file%')}"
-
-:: Check if the downloaded file exists
-if not exist "%temp_xml_file%" (
-    echo Failed to download XML file. Exiting.
-    pause
-    exit /b 1
-)
-
-REM Import the modified XML into Task Scheduler
-echo Importing modified XML into Task Scheduler...
-schtasks /create /tn "%task_name%" /xml "%temp_xml_file%"
-if %errorlevel% neq 0 (
-    echo Failed to import task. Errorlevel: %errorlevel%
-    pause
-    exit /b 1
-)
-echo Task "%task_name%" successfully created.
-pause
-goto regscan
+exit /b
 
 ::========================================================================================================================================
 
+:_color
+if %_NCS% EQU 1 (
+echo %esc%[%~1%~2%esc%[0m
+) else (
+%psc% write-host -back '%1' -fore '%2' '%3'
+)
+exit /b
+
+:_color2
+if %_NCS% EQU 1 (
+echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
+) else (
+%psc% write-host -back '%1' -fore '%2' '%3' -NoNewline;
+write-host -back '%4' -fore '%5' '%6'
+)
+exit /b
+
+::========================================================================================================================================
 :regscan:
 $finalValues = @()
-
 $arch = (Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment').PROCESSOR_ARCHITECTURE
 if ($arch -eq "x86") {
   $regPaths = @("HKCU:\Software\Classes\CLSID", "Registry::HKEY_USERS\$sid\Software\Classes\CLSID")
@@ -927,7 +795,7 @@ if ($finalValues -ne $null) {
     Write-Host
 } else {
     Write-Host "IDM CLSID Registry Keys are not found."
-	Exit
+    Exit
 }
 
 if (($finalValues.Count -gt 20) -and ($toggle -ne $null)) {
@@ -1023,28 +891,3 @@ foreach ($regPath in $regPaths) {
         }
     }
 }
-
-:regscan:
-
-::========================================================================================================================================
-
-:_color
-
-if %_NCS% EQU 1 (
-echo %esc%[%~1%~2%esc%[0m
-) else (
-%psc% write-host -back '%1' -fore '%2' '%3'
-)
-exit /b
-
-:_color2
-
-if %_NCS% EQU 1 (
-echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
-) else (
-%psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
-)
-exit /b
-
-::========================================================================================================================================
-:: Leave empty line below
