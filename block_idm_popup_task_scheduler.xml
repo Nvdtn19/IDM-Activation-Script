@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <Date>2025-04-26T18:55:22.9616074</Date>
     <URI>\Block IDM Popup</URI>
   </RegistrationInfo>
   <Triggers>
@@ -11,7 +10,6 @@
   </Triggers>
   <Principals>
     <Principal id="Author">
-      <UserId>Administrator</UserId>
       <LogonType>InteractiveToken</LogonType>
       <RunLevel>HighestAvailable</RunLevel>
     </Principal>
@@ -45,6 +43,3 @@
     </Exec>
   </Actions>
 </Task>
-
-
-
