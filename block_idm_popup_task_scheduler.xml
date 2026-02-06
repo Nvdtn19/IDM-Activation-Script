@@ -19,6 +19,7 @@
     </Principal>
   </Principals>
   <Settings>
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
     <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
     <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
     <StopIfGoingOnBatteries>true</StopIfGoingOnBatteries>
@@ -46,3 +47,4 @@
     </Exec>
   </Actions>
 </Task>
+
