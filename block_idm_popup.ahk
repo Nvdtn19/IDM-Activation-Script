@@ -1,42 +1,96 @@
-; ==============================================
+; ==============================================================================
 ; AutoHotkey Script to Hide IDM Nags
 ; GitHub: https://github.com/Nvdtn19/IDM-Activation-Script/
 ; Description: This script automatically detects and hides 
 ;              unwanted popups from Internet Download Manager (IDM).
 ;
 ; Features:
-;   - Hides and closes IDM popups as fast as possible.
-;   - Runs every 100ms for near-instant reaction.
-;     Though, don't worries, that won't leading to high CPU/RAM usage. 
-;     It only use up to 1MB of RAM, even on weak computer.
-;   - Hides registration, trial expiration, hosts file warning, and exit popups.
-;   - Closes update check and hosts file warning popups.
+;   - Hybrid Event-Driven Logic: Uses Windows Shell Hooks to stay idle (0% CPU)
+;     until a popup is detected.
+;   - 10ms Burst Mode: Once a popup is blocked, the script enters a high-alert
+;     state (10ms polling) for 1 second to catch chained/sequential popups.
+;   - Ultra-Lightweight: Uses less than 2MB of RAM and zero CPU during idle, 
+;     making it perfect for any computer, even low-end systems.
+;   - Intelligent Filtering: Targets registration, trial expiration, hosts file 
+;     warnings, and exit messages.
 ;
-;       Currently this script only support the English
-;       version of IDM
-;
-; This script requires AHK 2.0
-; You can download it from https://www.autohotkey.com/
-; ==============================================
+; Note: Currently this script only supports the English version of IDM.
+; Requirement: AutoHotkey v2.0+ (https://www.autohotkey.com/)
+; ==============================================================================
 
 #SingleInstance Force
-SetTimer(HideOrCloseIDMPopups, 100) ; Run every 100ms for faster response
+Persistent
 
-HideOrCloseIDMPopups() {
-    idmWindow := WinExist("Internet Download Manager")
-    if idmWindow {
-        winText := WinGetText(idmWindow) ; Retrieve window text in AHK v2
-        if winText {
-            if (InStr(winText, "Your browser may not open IDM website because an important system file is damaged on your computer") 
-             || InStr(winText, "Do you want to register your copy of IDM now?")
+global isBursting := false
+global burstStartTime := 0
+
+InitialCheck()
+
+DllCall("RegisterShellHookWindow", "Ptr", A_ScriptHwnd)
+OnMessage(DllCall("RegisterWindowMessage", "Str", "SHELLHOOK"), ShellMessage)
+
+InitialCheck() {
+    idmWindows := WinGetList("ahk_class #32770 ahk_exe IDMan.exe")
+    for hwnd in idmWindows {
+        if CheckIDM(hwnd) {
+            StartBurstMode()
+        }
+    }
+}
+
+ShellMessage(wParam, lParam, *) {
+    if (wParam = 1 || wParam = 4 || wParam = 6 || wParam = 32772) {
+        if CheckIDM(lParam) {
+            StartBurstMode()
+        }
+    }
+}
+
+StartBurstMode() {
+    global isBursting, burstStartTime
+    burstStartTime := A_TickCount
+    if (!isBursting) {
+        isBursting := true
+        SetTimer(BurstCheck, 10)
+    }
+}
+
+BurstCheck() {
+    global isBursting, burstStartTime
+    
+    foundAnything := false
+    idmWindows := WinGetList("ahk_class #32770 ahk_exe IDMan.exe")
+    for hwnd in idmWindows {
+        if CheckIDM(hwnd) {
+            foundAnything := true
+            burstStartTime := A_TickCount
+        }
+    }
+
+    if (A_TickCount - burstStartTime > 1000) {
+        SetTimer(BurstCheck, 0)
+        isBursting := false
+    }
+}
+
+CheckIDM(hwnd) {
+    if !WinExist(hwnd)
+        return false
+
+    try {
+        if WinGetProcessName(hwnd) = "IDMan.exe" {
+            winText := WinGetText(hwnd)
+            winTitle := WinGetTitle(hwnd)
+
+            if (InStr(winText, "Your browser may not open IDM website") 
+             || InStr(winText, "Do you want to register")
              || InStr(winText, "fake Serial Number")
-             || InStr(winText, "IDM has not been registered for 30 days. Trial period is over")
-             || InStr(winText, "IDM is exiting...")) { ; Hides exit message
-                WinHide(idmWindow) ; Hide these popups ASAP
-            } else if (InStr(winText, "IDM cannot check for updates because an important system file is damaged on your computer")
-                    || InStr(winText, "Please note that this version and all previous versions of IDM may not use " . Chr(34) . "hosts" . Chr(34) . " file when they connect to IDM home site")) {
-                WinClose(idmWindow) ; Close these popups immediately
+             || InStr(winText, "Trial period is over")
+             || InStr(winText, "IDM is exiting...")) {
+                WinHide(hwnd)
+                return true
             }
         }
     }
+    return false
 }
