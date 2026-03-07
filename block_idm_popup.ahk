@@ -83,6 +83,7 @@ CheckIDM(hwnd) {
             winTitle := WinGetTitle(hwnd)
 
             if (InStr(winText, "Your browser may not open IDM website") 
+             || InStr(winText, "IDM cannot check for updates")
              || InStr(winText, "Do you want to register")
              || InStr(winText, "fake Serial Number")
              || InStr(winText, "Trial period is over")
