@@ -21,13 +21,19 @@
 #SingleInstance Force
 Persistent
 
+; Request Administrator privileges to bypass Windows UIPI restrictions
+if not A_IsAdmin {
+    Run("*RunAs `"" A_ScriptFullPath "`"")
+    ExitApp()
+}
+
 global isBursting := false
 global burstStartTime := 0
 
-InitialCheck()
-
 DllCall("RegisterShellHookWindow", "Ptr", A_ScriptHwnd)
 OnMessage(DllCall("RegisterWindowMessage", "Str", "SHELLHOOK"), ShellMessage)
+
+InitialCheck()
 
 InitialCheck() {
     idmWindows := WinGetList("ahk_class #32770 ahk_exe IDMan.exe")
@@ -39,9 +45,16 @@ InitialCheck() {
 }
 
 ShellMessage(wParam, lParam, *) {
+    ; wParam = 1 is the HSHELL_WINDOWCREATED event
     if (wParam = 1 || wParam = 4 || wParam = 6 || wParam = 32772) {
-        if CheckIDM(lParam) {
-            StartBurstMode()
+        if WinExist(lParam) {
+            try {
+                ; Trigger burst mode immediately when an IDM dialog appears
+                ; Allows the UI enough time to load text before reading the content
+                if (WinGetProcessName(lParam) = "IDMan.exe" && WinGetClass(lParam) = "#32770") {
+                    StartBurstMode()
+                }
+            }
         }
     }
 }
@@ -58,15 +71,14 @@ StartBurstMode() {
 BurstCheck() {
     global isBursting, burstStartTime
     
-    foundAnything := false
     idmWindows := WinGetList("ahk_class #32770 ahk_exe IDMan.exe")
     for hwnd in idmWindows {
         if CheckIDM(hwnd) {
-            foundAnything := true
             burstStartTime := A_TickCount
         }
     }
 
+    ; Stop burst mode after 1 second (1000ms) to save resources
     if (A_TickCount - burstStartTime > 1000) {
         SetTimer(BurstCheck, 0)
         isBursting := false
@@ -78,17 +90,24 @@ CheckIDM(hwnd) {
         return false
 
     try {
-        if WinGetProcessName(hwnd) = "IDMan.exe" {
+        if (WinGetProcessName(hwnd) = "IDMan.exe") {
             winText := WinGetText(hwnd)
-            winTitle := WinGetTitle(hwnd)
-
-            if (InStr(winText, "Your browser may not open IDM website") 
-             || InStr(winText, "IDM cannot check for updates")
+            
+            ; Apply hide command (WinHide) specifically for browser warning
+            if (InStr(winText, "Your browser may not open IDM website")
+             || InStr(winText, "Trial period is over")
+             || InStr(winText, "Do you want to register your copy of IDM now")) {
+                WinHide(hwnd)
+                return true
+            }
+            
+            ; Apply close command (WinClose) for the remaining nags
+            if (InStr(winText, "IDM cannot check for updates")
              || InStr(winText, "Do you want to register")
              || InStr(winText, "fake Serial Number")
-             || InStr(winText, "Trial period is over")
+             || InStr(winText, "Please note that this version and all previous versions of IDM may not use")
              || InStr(winText, "IDM is exiting...")) {
-                WinHide(hwnd)
+                WinClose(hwnd) 
                 return true
             }
         }
